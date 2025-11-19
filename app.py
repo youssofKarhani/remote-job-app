@@ -22,6 +22,11 @@ def main():
         """
     )
 
+    # --- Callbacks ---
+    def reset_pagination():
+        st.session_state.page = 1
+
+    # --- Sidebar ---
     st.sidebar.header("Controls")
     if st.sidebar.button("Refresh Jobs"):
         st.cache_data.clear()
@@ -30,9 +35,11 @@ def main():
         st.rerun()
 
     if st.sidebar.button("Clear Filters"):
+        st.session_state.remote_only = False
         st.session_state.country = ""
         st.session_state.keywords = ""
         st.session_state.selected_job_types = []
+        st.session_state.sort_by = "Newest"
         st.session_state.page = 1
         st.rerun()
 
@@ -68,11 +75,11 @@ def main():
 
             # Filtering UI
             st.sidebar.header("Filter & Sort")
-            st.sidebar.checkbox("🌎 Remote Only", key="remote_only")
-            st.sidebar.text_input("📍 Location", key="country")
-            st.sidebar.text_input("🔑 Keywords (comma-separated)", key="keywords")
-            st.sidebar.multiselect("📁 Job Type", options=all_job_types, key="selected_job_types")
-            st.sidebar.selectbox("Sort by", options=["Newest", "Oldest", "Company Name"], key="sort_by")
+            st.sidebar.checkbox("🌎 Remote Only", key="remote_only", on_change=reset_pagination)
+            st.sidebar.text_input("📍 Location", key="country", on_change=reset_pagination)
+            st.sidebar.text_input("🔑 Keywords (comma-separated)", key="keywords", on_change=reset_pagination)
+            st.sidebar.multiselect("📁 Job Type", options=all_job_types, key="selected_job_types", on_change=reset_pagination)
+            st.sidebar.selectbox("Sort by", options=["Newest", "Oldest", "Company Name"], key="sort_by", on_change=reset_pagination)
 
             # Apply filters from session state
             if st.session_state.remote_only:

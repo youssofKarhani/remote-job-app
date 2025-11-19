@@ -4,3 +4,6 @@ backgroundColor="#1a1a1a"
 secondaryBackgroundColor="#262626"
 textColor="#ffffff"
 font="sans serif"
+
+[sidebar]
+skeletonBackgroundColor="#262626"

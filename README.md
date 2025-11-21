@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-The `remotejobs-cli` project is a versatile tool for finding the latest remote job listings from the Arbeitnow API. It provides two ways to access job data: a fast and simple command-line interface (CLI) and an interactive web application.
+The `remote-job-app` project is a versatile tool for finding the latest remote job listings from the Arbeitnow API. It provides two ways to access job data: a fast and simple command-line interface (CLI) and an interactive web application.
 
 The CLI is designed to be lightweight and quick to launch, making it perfect for developers who want to check for new jobs directly in their terminal. It's also ideal for automation—for example, you could run a script to see the latest job updates every time you open your computer.
 

@@ -1,6 +1,7 @@
 import streamlit as st # type: ignore
 import pandas as pd
 from bs4 import BeautifulSoup # type: ignore
+from datetime import datetime, timedelta
 from jobs import fetch_jobs
 
 st.set_page_config(page_title="Remote Jobs", page_icon="💼", layout="wide")
@@ -11,16 +12,27 @@ def cached_fetch_jobs(page=1):
     """Fetch and cache jobs data for a specific page."""
     return fetch_jobs(page=page)
 
+def get_time_difference(past_time):
+    """Get a human-readable time difference with custom intervals."""
+    delta = datetime.now() - past_time
+    minutes = delta.total_seconds() / 60
+
+    if minutes < 1:
+        return f"{int(delta.total_seconds())} seconds ago"
+    
+    if minutes <= 5:
+        return f"{int(minutes)} minutes ago"
+
+    # After 5 minutes, snap to the nearest 10-minute interval starting from 5.
+    # e.g., 5, 15, 25, etc.
+    display_minutes = 10 * int((minutes - 5) // 10) + 5
+    return f"{display_minutes} minutes ago"
+
 
 def main():
     """Streamlit application for displaying remote jobs."""
     st.title("🚀 Latest Remote Jobs")
-    st.markdown(
-        """
-        This app fetches the latest remote job listings from the [Arbeitnow API](https://arbeitnow.com/api/job-board-api).
-        Job data is cached for 1 hour to ensure fast loading times.
-        """
-    )
+    
 
     # --- Callbacks ---
     def reset_pagination():
@@ -31,10 +43,11 @@ def main():
     if st.sidebar.button("Refresh Jobs"):
         st.cache_data.clear()
         st.session_state.page = 1
+        st.session_state.last_updated = datetime.now()
         st.success("Cache cleared! Fetching latest jobs...")
         st.rerun()
 
-    if st.sidebar.button("Clear Filters"):
+    if st.sidebar.button("Clear Filters", type="secondary"):
         st.session_state.remote_only = False
         st.session_state.country = ""
         st.session_state.keywords = ""
@@ -42,6 +55,8 @@ def main():
         st.session_state.sort_by = "Newest"
         st.session_state.page = 1
         st.rerun()
+
+    st.sidebar.divider()
 
     # Initialize session state for page number and filters
     if 'page' not in st.session_state:
@@ -56,6 +71,9 @@ def main():
         st.session_state.remote_only = False
     if 'sort_by' not in st.session_state:
         st.session_state.sort_by = "Newest"
+    if 'last_updated' not in st.session_state:
+        st.session_state.last_updated = datetime.now()
+
 
     try:
         # Fetch a stable list of job types from the first page
@@ -73,14 +91,20 @@ def main():
         if jobs:
             df = pd.DataFrame(jobs)
 
-            # Filtering UI
-            st.sidebar.header("Filter & Sort")
-            st.sidebar.checkbox("🌎 Remote Only", key="remote_only", on_change=reset_pagination)
+            # --- Main Page Global Controls ---
+            col1, col2 = st.columns(2)
+            with col1:
+                st.checkbox("🌎 Remote Only", key="remote_only", on_change=reset_pagination)
+            with col2:
+                st.selectbox("Sort by", options=["Newest", "Oldest", "Company Name"], key="sort_by", on_change=reset_pagination)
+
+
+            # --- Sidebar Filters ---
+            st.sidebar.subheader("Filter")
             st.sidebar.text_input("📍 Location", key="country", on_change=reset_pagination)
             st.sidebar.text_input("🔑 Keywords (comma-separated)", key="keywords", on_change=reset_pagination)
             st.sidebar.multiselect("📁 Job Type", options=all_job_types, key="selected_job_types", on_change=reset_pagination)
-            st.sidebar.selectbox("Sort by", options=["Newest", "Oldest", "Company Name"], key="sort_by", on_change=reset_pagination)
-
+            
             # Apply filters from session state
             if st.session_state.remote_only:
                 df = df[df["remote"] == True]
@@ -102,16 +126,29 @@ def main():
             elif st.session_state.sort_by == "Company Name":
                 df = df.sort_values(by="company_name", ascending=True) # type: ignore
 
+            # --- Status Line ---
+            update_time_str = get_time_difference(st.session_state.last_updated)
+            st.markdown(f"**{len(df)} jobs** • Page {st.session_state.page} • Updated {update_time_str}")
+            st.divider()
 
-            st.info(f"Showing {len(df)} jobs on page {st.session_state.page}.")
 
             for index, row in df.iterrows():
-                with st.expander(f"{row['title']} at {row['company_name']} - {row['location']} ({', '.join(row['job_types'])})"):
-                    st.markdown(f"**📅 Posted on:** {pd.to_datetime(row['created_at'], unit='s').strftime('%Y-%m-%d')}")
-                    st.markdown(f"**🔗 [View Job]({row['url']})**")
-                    with st.container():
-                        soup = BeautifulSoup(row['description'], 'lxml')
-                        st.markdown(soup.get_text(), unsafe_allow_html=False)
+                with st.container(border=True):
+                    st.markdown(f"### **{row['title']}**")
+                    st.markdown(f"<small>at *{row['company_name']}* | 📍 {row['location']}</small>", unsafe_allow_html=True)
+                    
+                    soup = BeautifulSoup(row['description'], 'lxml')
+                    description_text = soup.get_text()
+                    preview_text = description_text[:200].strip()
+                    st.markdown(f"{preview_text}...")
+
+                    with st.expander("Show full details"):
+                        st.markdown(f"**📅 Posted on:** {pd.to_datetime(row['created_at'], unit='s').strftime('%Y-%m-%d')}")
+                        st.markdown(f"**🔗 [View Job]({row['url']})**")
+                        st.markdown(f"**📁 Job Types:** {', '.join(row['job_types'])}")
+                        st.markdown("---")
+                        st.markdown(description_text, unsafe_allow_html=False)
+                st.write("") # Add a vertical gap between cards
             
             # Pagination controls
             col1, col2, col3 = st.columns([1, 1, 1])

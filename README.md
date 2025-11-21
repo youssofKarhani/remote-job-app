@@ -1,5 +1,9 @@
 # remotejobs-cli
 
+## Live Application
+
+You can access the live web application here: [https://jobs-surfer.up.railway.app/](https://jobs-surfer.up.railway.app/)
+
 ## Project Overview
 
 The `remote-job-app` project is a versatile tool for finding the latest remote job listings from the Arbeitnow API. It provides two ways to access job data: a fast and simple command-line interface (CLI) and an interactive web application.

@@ -1,6 +1,6 @@
-import streamlit as st
+import streamlit as st # type: ignore
 import pandas as pd
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup # type: ignore
 from jobs import fetch_jobs
 
 st.set_page_config(page_title="Remote Jobs", page_icon="💼", layout="wide")
@@ -96,11 +96,11 @@ def main():
 
             # Apply sorting
             if st.session_state.sort_by == "Newest":
-                df = df.sort_values(by="created_at", ascending=False)
+                df = df.sort_values(by="created_at", ascending=False) # type: ignore
             elif st.session_state.sort_by == "Oldest":
-                df = df.sort_values(by="created_at", ascending=True)
+                df = df.sort_values(by="created_at", ascending=True) # type: ignore
             elif st.session_state.sort_by == "Company Name":
-                df = df.sort_values(by="company_name", ascending=True)
+                df = df.sort_values(by="company_name", ascending=True) # type: ignore
 
 
             st.info(f"Showing {len(df)} jobs on page {st.session_state.page}.")

@@ -2,17 +2,21 @@
 
 ## Project Overview
 
-This project is a Python command-line interface (CLI) and a web application for fetching the latest remote job listings from the Arbeitnow API.
+The `remotejobs-cli` project is a versatile tool for finding the latest remote job listings from the Arbeitnow API. It provides two ways to access job data: a fast and simple command-line interface (CLI) and an interactive web application.
 
-The core technologies used are:
-- **Python:** The application is written in Python.
-- **requests:** To make HTTP requests to the Arbeitnow API.
-- **rich:** To create a visually appealing table for displaying the job data in the terminal.
-- **streamlit:** To create a simple web interface for displaying jobs.
+The CLI is designed to be lightweight and quick to launch, making it perfect for developers who want to check for new jobs directly in their terminal. It's also ideal for automation—for example, you could run a script to see the latest job updates every time you open your computer.
 
-The application has two entry points:
-- `main.py`: The CLI for fetching and displaying jobs in the console.
-- `app.py`: The Streamlit web application.
+The web application offers a more visual and user-friendly experience. It allows you to browse and explore job listings through a graphical interface in your web browser, making it easy to interact with the data.
+
+This dual-interface approach gives you the flexibility to choose the method that best fits your workflow. The project is built with **Python** and uses **requests** for fetching data, **rich** to create beautiful CLI output, and **Streamlit** to power the web UI.
+
+## Technical Structure
+
+The project is structured to separate the core logic from the user interfaces:
+
+- **`jobs.py`**: This module is the heart of the application's data handling. It contains the logic for fetching job data from the Arbeitnow API, ensuring that data retrieval is consistent and can be shared between both the CLI and web interfaces.
+- **`main.py`**: This is the entry point for the command-line interface. It uses the functions from `jobs.py` to get job listings and presents them in a clean, readable table in the terminal.
+- **`app.py`**: This is the entry point for the web application. It uses the Streamlit framework and the data from `jobs.py` to create the interactive web interface.
 
 ## Development
 

@@ -1,12 +1,16 @@
 import argparse
+
 from rich.console import Console
+
 from jobs import fetch_jobs, show_jobs
 
 console = Console()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Fetch remote jobs from Arbeitnow API.")
+    parser = argparse.ArgumentParser(
+        description="Fetch remote jobs from Arbeitnow API."
+    )
     parser.add_argument(
         "--country",
         type=str,
@@ -40,7 +44,8 @@ def main():
             job
             for job in jobs
             if any(
-                k in job.get("title", "").lower() or k in job.get("description", "").lower()
+                k in job.get("title", "").lower()
+                or k in job.get("description", "").lower()
                 for k in keywords_list
             )
         ]
@@ -54,7 +59,12 @@ def main():
             or job_type_lower in job.get("description", "").lower()
         ]
 
-    show_jobs(jobs, country=args.country, keywords=args.keywords.split(',') if args.keywords else None, job_type=args.job_type)
+    show_jobs(
+        jobs,
+        country=args.country,
+        keywords=args.keywords.split(",") if args.keywords else None,
+        job_type=args.job_type,
+    )
 
 
 if __name__ == "__main__":

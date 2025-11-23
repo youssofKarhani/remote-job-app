@@ -1,4 +1,5 @@
 from unittest.mock import patch
+
 from main import fetch_jobs
 
 

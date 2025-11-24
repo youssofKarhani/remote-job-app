@@ -15,6 +15,7 @@ GERMAN_CITIES = {
     "cologne": (50.9364, 6.9528),
     "köln": (50.9364, 6.9528),
     "frankfurt": (50.1106, 8.6822),
+    "frankfurt am main": (50.1106, 8.6822),
     "stuttgart": (48.7775, 9.1800),
     "düsseldorf": (51.2333, 6.7833),
     "leipzig": (51.3400, 12.3750),
@@ -102,25 +103,22 @@ def show_placeholder_cards(num=3):
 
 
 def find_german_city_in_location(location_str, german_cities_dict):
+    """Find a German city in a location string."""
+    if pd.isna(location_str):
+        return None
+
     location_lower = location_str.lower()
 
-    # Priority 1: Direct matches for common city variations
-    # This helps if the location string is tricky or has specific formatting
-    for city_key in german_cities_dict:
+    # Sort keys by length (longest first) to prioritize more specific matches
+    # e.g., "frankfurt am main" before "frankfurt"
+    sorted_keys = sorted(german_cities_dict.keys(), key=len, reverse=True)
+
+    for city_key in sorted_keys:
         if city_key in location_lower:
-            # Check for common variations and ensure "frankfurt am main"
-            # maps to "frankfurt" if needed
-            if city_key == "frankfurt am main" and "frankfurt" in german_cities_dict:
+            # Standardize "frankfurt am main" to "frankfurt"
+            if "frankfurt" in city_key:
                 return "frankfurt"
             return city_key
-
-    # Priority 2: Split by common delimiters and check for exact matches
-    # This handles formats like "City, State" or "City - Region"
-    parts = location_lower.replace("-", ",").replace("/", ",").split(",")
-    for part in parts:
-        cleaned_part = part.strip()
-        if cleaned_part in german_cities_dict:
-            return cleaned_part
 
     return None
 
@@ -269,6 +267,10 @@ def main():
 
             # --- Insights Section ---
             if not df.empty:
+                st.write(f"Total jobs fetched: {len(df)}") # Debug print
+
+
+
                 with st.expander("Insights", expanded=True):
                     col1, col2 = st.columns(2)
 
@@ -299,7 +301,7 @@ def main():
                                         tooltip=["Category", "Count"],
                                     )
                                 )
-                                st.altair_chart(chart, width="stretch")
+                                st.altair_chart(chart, use_container_width=True)
                             else:
                                 st.markdown("No category data to display.")
 
@@ -330,42 +332,39 @@ def main():
                                         tooltip=["Location", "Count"],
                                     )
                                 )
-                                st.altair_chart(loc_chart, width="stretch")
+                                st.altair_chart(loc_chart, use_container_width=True)
                             else:
                                 st.markdown("No location data to display.")
 
                     # --- Germany Map ---
-                    df_germany = df[
-                        df["location"].str.contains("Germany", case=False, na=False)
-                    ]
+                    df["matched_city"] = df["location"].apply(
+                        lambda x: find_german_city_in_location(x, GERMAN_CITIES)
+                    )
+                    df_germany = df[df["matched_city"].notna()].copy()
+
                     if not df_germany.empty:
                         st.divider()
                         st.markdown("##### Jobs Map - Germany")
 
-                        job_counts = {city: 0 for city in GERMAN_CITIES}
-                        for _, row in df_germany.iterrows():
-                            matched_city_key = find_german_city_in_location(
-                                row["location"], GERMAN_CITIES
-                            )
-                            if matched_city_key:
-                                job_counts[matched_city_key] += 1
+                        job_counts = (
+                            df_germany["matched_city"].value_counts().to_dict()
+                        )
 
                         locations_to_plot = []
                         for city, count in job_counts.items():
-                            if count > 0:  # Only add cities that have at least one job
+                            if count > 0 and city in GERMAN_CITIES:
                                 coords = GERMAN_CITIES[city]
                                 locations_to_plot.append(
                                     {
                                         "lat": coords[0],
                                         "lon": coords[1],
-                                        "size": count,  # Use count for size, even if 1
+                                        "size": count,
                                     }
                                 )
 
                         if locations_to_plot:
                             map_df = pd.DataFrame(locations_to_plot)
-                            map_df["color"] = "#FF0000"  # Add a color column for red
-                            st.map(map_df, zoom=5, size="size", color="color")
+                            st.map(map_df, zoom=5)
                         else:
                             st.markdown(
                                 "No plottable German cities in the current results."

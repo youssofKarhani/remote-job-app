@@ -138,7 +138,6 @@ def main():
         st.session_state.selected_job_types = []
         st.session_state.sort_by = "Newest"
         st.session_state.page = 1
-        st.rerun()
 
     # --- Sidebar ---
     st.sidebar.header("Controls")
@@ -149,8 +148,7 @@ def main():
         st.success("Cache cleared! Fetching latest jobs...")
         st.rerun()
 
-    if st.sidebar.button("Clear Filters", type="secondary"):
-        clear_filters_func()
+    st.sidebar.button("Clear Filters", type="secondary", on_click=clear_filters_func)
 
     st.sidebar.divider()
 
@@ -252,12 +250,15 @@ def main():
                 ]
 
             # Apply sorting
-            if st.session_state.sort_by == "Newest":
-                df = df.sort_values(by="created_at", ascending=False)  # type: ignore
-            elif st.session_state.sort_by == "Oldest":
-                df = df.sort_values(by="created_at", ascending=True)  # type: ignore
-            elif st.session_state.sort_by == "Company Name":
-                df = df.sort_values(by="company_name", ascending=True)  # type: ignore
+            if st.session_state.sort_by == "Newest" and "created_at" in df.columns:
+                df = df.sort_values(by="created_at", ascending=False)
+            elif st.session_state.sort_by == "Oldest" and "created_at" in df.columns:
+                df = df.sort_values(by="created_at", ascending=True)
+            elif (
+                st.session_state.sort_by == "Company Name"
+                and "company_name" in df.columns
+            ):
+                df = df.sort_values(by="company_name", ascending=True)
 
             # --- Status Line ---
             update_time_str = get_time_difference(st.session_state.last_updated)
@@ -271,7 +272,7 @@ def main():
 
 
 
-                with st.expander("Insights", expanded=True):
+                with st.expander("Insights", expanded=False):
                     col1, col2 = st.columns(2)
 
                     with col1:
@@ -378,8 +379,7 @@ def main():
                     "Try changing your keywords or clearing some filters "
                     "to see more results."
                 )
-                if st.button("Clear All Filters"):
-                    clear_filters_func()
+                st.button("Clear All Filters", on_click=clear_filters_func)
             else:
                 for index, row in df.iterrows():
                     with st.container(border=True):
@@ -422,10 +422,11 @@ def main():
                         )
 
                         with st.expander("Show full details"):
-                            posted_date = pd.to_datetime(
-                                row["created_at"], unit="s"
-                            ).strftime("%Y-%m-%d")
-                            st.markdown(f"**📅 Posted on:** {posted_date}")
+                            if "created_at" in row and pd.notna(row["created_at"]):
+                                posted_date = pd.to_datetime(
+                                    row["created_at"], unit="s"
+                                ).strftime("%Y-%m-%d")
+                                st.markdown(f"**📅 Posted on:** {posted_date}")
                             st.markdown(f"**🔗 [View Job]({row['url']})**")
                             st.markdown("---")
                             st.markdown(description_text, unsafe_allow_html=False)

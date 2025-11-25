@@ -125,7 +125,7 @@ def find_german_city_in_location(location_str, german_cities_dict):
 
 def main():
     """Streamlit application for displaying remote jobs."""
-    st.title("🚀 Latest Remote Jobs")
+    st.title("🚀 Latest Jobs from Arbeitnow")
 
     # --- Callbacks ---
     def reset_pagination():
@@ -383,7 +383,12 @@ def main():
             else:
                 for index, row in df.iterrows():
                     with st.container(border=True):
-                        st.markdown(f"### **{row['title']}**")
+                        col1, col2 = st.columns([4, 1])
+                        with col1:
+                            st.markdown(f"### **{row['title']}**")
+                        with col2:
+                            st.link_button("🔗 View Job", row["url"], type="secondary")
+
                         st.markdown(
                             (
                                 f"<small>at *{row['company_name']}* | "
@@ -416,20 +421,51 @@ def main():
                         soup = BeautifulSoup(row["description"], "lxml")
                         description_text = soup.get_text()
                         preview_text = description_text[:200].strip()
-                        st.markdown(
-                            f"<div style='margin-top: 10px;'>{preview_text}...</div>",
-                            unsafe_allow_html=True,
-                        )
 
-                        with st.expander("Show full details"):
+                        show_more_key = f"show_more_{index}"
+                        if show_more_key not in st.session_state:
+                            st.session_state[show_more_key] = False
+
+                        if st.session_state[show_more_key]:
+                            # Show full description and other details
                             if "created_at" in row and pd.notna(row["created_at"]):
                                 posted_date = pd.to_datetime(
                                     row["created_at"], unit="s"
                                 ).strftime("%Y-%m-%d")
-                                st.markdown(f"**📅 Posted on:** {posted_date}")
-                            st.markdown(f"**🔗 [View Job]({row['url']})**")
-                            st.markdown("---")
+                                st.subheader(f"📅 Posted on: {posted_date}")
+                                st.divider()
                             st.markdown(description_text, unsafe_allow_html=False)
+                            st.link_button("🔗 View Job", row["url"], type="primary")
+
+                            def create_show_less_callback(key):
+                                def callback():
+                                    st.session_state[key] = False
+
+                                return callback
+
+                            st.button(
+                                "Show less",
+                                key=f"show_less_btn_{index}",
+                                on_click=create_show_less_callback(show_more_key),
+                            )
+                        else:
+                            # Show preview and "Show more" button
+                            st.markdown(
+                                f"<div style='margin-top: 10px;'>{preview_text}...</div>",
+                                unsafe_allow_html=True,
+                            )
+
+                            def create_show_more_callback(key):
+                                def callback():
+                                    st.session_state[key] = True
+
+                                return callback
+
+                            st.button(
+                                "Show more",
+                                key=f"show_more_btn_{index}",
+                                on_click=create_show_more_callback(show_more_key),
+                            )
                     st.write("")  # Add a vertical gap between cards
 
                 # Pagination controls

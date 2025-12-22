@@ -127,6 +127,66 @@ def main():
     """Streamlit application for displaying remote jobs."""
     st.title("🚀 Latest Remote Jobs")
 
+    # --- Theme Selection ---
+    if "theme" not in st.session_state:
+        st.session_state.theme = "Dark"  # Default theme
+
+    st.sidebar.header("Theme")
+    st.sidebar.radio("Select Theme", ["Dark", "Light"], key="theme")
+
+    # --- Dynamic CSS for themes ---
+    if st.session_state.theme == "Light":
+        st.markdown(
+            """
+            <style>
+            .stApp {
+                background-color: #ffffff;
+                color: #000000;
+            }
+            /* Sidebar */
+            .st-emotion-cache-1avfbj7, .st-emotion-cache-1r6slb0 {
+                background-color: #f0f2f6;
+            }
+            /* Job container */
+            .st-emotion-cache-1c7y2kd {
+                border: 1px solid #e6e6e6;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        tag_style = (
+            "background-color: #f0f2f6; color: #333333; "
+            "padding: 2px 8px; border-radius: 12px; "
+            "margin-right: 4px; font-size: 0.9em;"
+        )
+    else:  # Dark theme
+        st.markdown(
+            """
+            <style>
+            .stApp {
+                background-color: #1a1a1a;
+                color: #ffffff;
+            }
+            /* Sidebar */
+            .st-emotion-cache-1avfbj7, .st-emotion-cache-1r6slb0 {
+                background-color: #262626;
+            }
+            /* Job container */
+            .st-emotion-cache-1c7y2kd {
+                border: 1px solid #333333;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        tag_style = (
+            "background-color: #262626; color: #ffffff; "
+            "padding: 2px 8px; border-radius: 12px; "
+            "margin-right: 4px; font-size: 0.9em;"
+        )
+
+
     # --- Callbacks ---
     def reset_pagination():
         st.session_state.page = 1
@@ -402,11 +462,6 @@ def main():
                             )  # Ensure no empty tags
 
                         if tags:
-                            tag_style = (
-                                "background-color: #262626; color: #ffffff; "
-                                "padding: 2px 8px; border-radius: 12px; "
-                                "margin-right: 4px; font-size: 0.9em;"
-                            )
                             tag_html = "".join(
                                 f'<span style="{tag_style}">{tag}</span>'
                                 for tag in tags
